@@ -17,6 +17,23 @@ export default function SessionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleExport = async (sessionId: string) => {
+    try {
+      const res = await sessionsApi.exportSession(sessionId);
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `ppg_session_${sessionId.slice(0, 8)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Failed to export session data.');
+    }
+  };
+
   return (
     <div className="flex-1 p-8 pb-12 flex flex-col min-h-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[rgba(34,211,238,0.03)] to-transparent">
       <div className="mb-8">
@@ -100,14 +117,13 @@ export default function SessionsPage() {
                         </span>
                       </td>
                       <td className="pr-6 py-4 text-right flex items-center justify-end gap-2">
-                        <a 
-                          href={sessionsApi.exportUrl(s.id)} 
-                          download 
+                        <button 
+                          onClick={() => handleExport(s.id)}
                           className="p-1.5 rounded-lg border border-white/5 hover:border-emerald-500/30 hover:text-emerald-400 text-slate-500 transition-all"
                           title="Download CSV"
                         >
                           <Download size={16} />
-                        </a>
+                        </button>
                         <Link href={`/dashboard/sessions/${s.id}`} className="btn-ghost px-3 py-1.5 inline-flex items-center gap-1 group-hover:border-cyan-500/30 group-hover:text-cyan-400 transition-colors">
                           View
                           <ChevronRight size={14} />

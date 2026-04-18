@@ -80,6 +80,7 @@ export const sessionsApi = {
   data   : (id: string, limit = 500, cursor?: string) =>
              api.get(`/api/sessions/${id}/data`, { params: { limit, cursor } }),
   end    : (id: string) => api.patch(`/api/sessions/${id}/end`),
+  exportSession: (id: string) => api.get(`/api/sessions/${id}/export`, { responseType: 'blob' }),
   exportUrl: (id: string) => `${API_URL}/api/sessions/${id}/export`,
 };
 
