@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { useAppStore } from '@/lib/store';
-import { authApi, storeToken, getStoredToken } from '@/lib/api';
+import { authApi, storeToken } from '@/lib/api';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { setUser, setAccessToken } = useAppStore();
-  const router       = useRouter();
+function TokenHandler() {
   const searchParams = useSearchParams();
+  const { setUser, setAccessToken } = useAppStore();
+  const router = useRouter();
 
   useEffect(() => {
     // Extract token from Google OAuth redirect URL (?token=xxx)
@@ -32,8 +32,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .catch(() => router.replace('/'));  // Not logged in → back to landing
   }, [setUser, setAccessToken, router, searchParams]);
 
+  return null;
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--bg-base)' }}>
+      <Suspense fallback={null}>
+        <TokenHandler />
+      </Suspense>
       <Sidebar />
       <div className="flex-1 ml-64 min-h-screen flex flex-col">
         {children}
