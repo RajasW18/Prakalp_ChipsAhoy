@@ -208,26 +208,29 @@ async function upsertDevice(macAddress) {
 // Find or create an ACTIVE session for this device.
 // A new session is created if none exists or the latest one was completed/errored.
 async function ensureActiveSession(device) {
+  const currentPatientId = device.patientId || (await getOrCreateDefaultPatient()).id;
+
   // Check cache first
   const cached = sessionCache.get(device.id);
-  if (cached) return cached;
+  // Only use cache if the patient hasn't changed
+  if (cached && cached.patientId === currentPatientId) return cached;
 
   // Try to find an existing active session
   let session = await prisma.session.findFirst({
-    where  : { deviceId: device.id, status: 'ACTIVE' },
+    where  : { deviceId: device.id, status: 'ACTIVE', patientId: currentPatientId },
     orderBy: { startedAt: 'desc' },
   });
 
   if (!session) {
-    // Create a new session; use device's assigned patient (if any)
+    // Create a new session for the current patient
     session = await prisma.session.create({
       data: {
         deviceId : device.id,
-        patientId: device.patientId || (await getOrCreateDefaultPatient()).id,
+        patientId: currentPatientId,
         status   : 'ACTIVE',
       },
     });
-    console.log(`[SESSION] New session ${session.id} for device ${device.macAddress}`);
+    console.log(`[SESSION] New session ${session.id} for device ${device.macAddress} (Patient: ${currentPatientId})`);
   }
 
   sessionCache.set(device.id, session);
