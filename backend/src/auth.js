@@ -50,14 +50,16 @@ function setCookies(res, user) {
   const access  = signAccessToken(user);
   const refresh = signRefreshToken(user);
 
-  const secure = process.env.COOKIE_SECURE === 'true';
+  const secure   = process.env.COOKIE_SECURE === 'true';
+  // Cross-domain (Vercel ↔ Render) requires 'none'; local dev uses 'lax'
+  const sameSite = secure ? 'none' : 'lax';
 
   res.cookie('ppg_access', access, {
-    httpOnly: true, secure, sameSite: 'lax',
+    httpOnly: true, secure, sameSite,
     maxAge  : 60 * 60 * 1000,       // 1 h
   });
   res.cookie('ppg_refresh', refresh, {
-    httpOnly: true, secure, sameSite: 'lax',
+    httpOnly: true, secure, sameSite,
     maxAge  : 7 * 24 * 60 * 60 * 1000,  // 7 d
     path    : '/auth/refresh',
   });
