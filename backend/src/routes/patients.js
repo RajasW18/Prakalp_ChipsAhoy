@@ -1,11 +1,9 @@
 'use strict';
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { PrismaClient } = require('@prisma/client');
 const { authenticate, requireDoctor } = require('../middleware/authenticate');
-
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // GET /api/patients — doctors/admins see all; patients see only themselves
 router.get('/', authenticate, async (req, res, next) => {

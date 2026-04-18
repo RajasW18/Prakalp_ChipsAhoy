@@ -5,13 +5,14 @@ const passport = require('passport');
 const jwt      = require('jsonwebtoken');
 const { setCookies, setup2FA, verify2FA } = require('../auth');
 const { authenticate, requireDoctor }     = require('../middleware/authenticate');
-const { PrismaClient } = require('@prisma/client');
+// Import shared prisma instance
+const prisma = require('../db');
 const bcrypt = require('bcryptjs');
 const { sendOtpEmail } = require('../mailer');
 
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // ── Step 1: Redirect to Google ────────────────────────────────────────────────
 router.get('/google',

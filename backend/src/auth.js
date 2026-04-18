@@ -6,9 +6,7 @@ const jwt       = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const qrcode    = require('qrcode');
 const crypto    = require('crypto');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require('./db');
 
 // ─── Encryption helpers (AES-256-CBC) for TOTP secrets at rest ────────────────
 const ENC_KEY = Buffer.from(process.env.TOTP_ENCRYPTION_KEY || '0'.repeat(64), 'hex');

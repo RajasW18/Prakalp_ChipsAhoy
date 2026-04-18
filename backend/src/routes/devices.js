@@ -1,11 +1,9 @@
 'use strict';
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { PrismaClient } = require('@prisma/client');
 const { authenticate, requireDoctor } = require('../middleware/authenticate');
-
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // GET /api/devices — list all devices (doctors see all; patients see theirs)
 router.get('/', authenticate, async (req, res, next) => {

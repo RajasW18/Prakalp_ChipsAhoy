@@ -1,11 +1,9 @@
 'use strict';
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { PrismaClient } = require('@prisma/client');
 const { authenticate, requireDoctor } = require('../middleware/authenticate');
-
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // POST /api/consult/:sessionId — doctor adds a consultation to a session
 router.post('/:sessionId',

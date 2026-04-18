@@ -1,10 +1,8 @@
 'use strict';
 
 const mqtt       = require('mqtt');
-const { PrismaClient } = require('@prisma/client');
-const { broadcast }    = require('./websocket');
-
-const prisma = new PrismaClient();
+const { broadcast } = require('./websocket');
+const prisma = require('./db');
 
 // ─── In-memory caches (avoid per-packet DB round trips at 100 Hz) ────────────
 // mac → device record

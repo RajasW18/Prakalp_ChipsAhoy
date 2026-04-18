@@ -1,10 +1,8 @@
 'use strict';
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const { authenticate, requireDoctor } = require('../middleware/authenticate');
-
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../db');
 
 // GET /api/sessions/:id/data — paginated PPG readings for a session
 router.get('/:id/data', authenticate, async (req, res, next) => {
