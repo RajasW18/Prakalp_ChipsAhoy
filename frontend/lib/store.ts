@@ -2,12 +2,18 @@ import { create } from 'zustand';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface User {
-  id         : string;
-  email      : string;
-  name       : string;
-  avatarUrl  ?: string;
-  role       : 'PATIENT' | 'DOCTOR' | 'ADMIN';
-  totpEnabled: boolean;
+  id           : string;
+  email        : string;
+  name         : string;
+  avatarUrl    ?: string;
+  phoneNumber  ?: string;
+  role         : 'PATIENT' | 'DOCTOR' | 'ADMIN';
+  totpEnabled  : boolean;
+  age          ?: number;
+  gender       ?: string;
+  weight       ?: number;
+  height       ?: number;
+  createdAt    ?: string;
 }
 
 export interface PPGPoint {
