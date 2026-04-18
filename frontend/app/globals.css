@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Design Tokens ────────────────────────────────────────────────────── */
+:root {
+  --bg-base       : #030712;
+  --bg-card       : rgba(255,255,255,0.04);
+  --bg-card-hover : rgba(255,255,255,0.07);
+  --border        : rgba(255,255,255,0.08);
+  --border-active : rgba(34,211,238,0.4);
+  --cyan          : #22d3ee;
+  --purple        : #8b5cf6;
+  --green         : #10b981;
+  --amber         : #f59e0b;
+  --red           : #ef4444;
+  --text-primary  : #f0f9ff;
+  --text-muted    : #94a3b8;
+  --text-faint    : #475569;
+}
+
+/* ── Base Reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family    : 'Inter', system-ui, sans-serif;
+  background     : var(--bg-base);
+  color          : var(--text-primary);
+  min-height     : 100vh;
+  overflow-x     : hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar             { width: 6px; height: 6px; }
+::-webkit-scrollbar-track       { background: transparent; }
+::-webkit-scrollbar-thumb       { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.4); }
+
+/* ── Glass Card ───────────────────────────────────────────────────────────── */
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border;
+    background    : var(--bg-card);
+    border-color  : var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition    : background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .glass-card:hover {
+    background  : var(--bg-card-hover);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .glass-card-active {
+    border-color: var(--border-active);
+    box-shadow  : 0 0 0 1px rgba(34,211,238,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Cyan glow button */
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200;
+    background   : linear-gradient(135deg, #22d3ee, #8b5cf6);
+    color        : #030712;
+    box-shadow   : 0 0 20px rgba(34,211,238,0.3);
+  }
+  .btn-primary:hover {
+    box-shadow   : 0 0 30px rgba(34,211,238,0.5);
+    transform    : translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200;
+    border       : 1px solid var(--border);
+    color        : var(--text-muted);
+    background   : transparent;
+  }
+  .btn-ghost:hover {
+    border-color : var(--border-active);
+    color        : var(--cyan);
+    background   : rgba(34,211,238,0.06);
+  }
+
+  /* Severity badge */
+  .badge-normal  { @apply px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25; }
+  .badge-monitor { @apply px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/25; }
+  .badge-urgent  { @apply px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/25; }
+
+  /* Metric value */
+  .metric-value { @apply font-mono text-3xl font-bold tracking-tight; color: var(--cyan); }
+  .metric-label { @apply text-xs font-medium uppercase tracking-widest; color: var(--text-muted); }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150;
+    color: var(--text-muted);
+  }
+  .nav-item:hover {
+    background: rgba(255,255,255,0.05);
+    color     : var(--text-primary);
+  }
+  .nav-item.active {
+    background: rgba(34,211,238,0.1);
+    color     : var(--cyan);
+    border-left: 2px solid var(--cyan);
+  }
+}
+
+/* ── Animated Background Orbs ─────────────────────────────────────────────── */
+.bg-orb {
+  position  : absolute;
+  border-radius: 50%;
+  filter    : blur(80px);
+  pointer-events: none;
+  animation : float 10s ease-in-out infinite;
+}
+.bg-orb-cyan   { background: radial-gradient(circle, rgba(34,211,238,0.18) 0%, transparent 70%); }
+.bg-orb-purple { background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%); }
+
+/* ── ECG / PPG Chart Override ─────────────────────────────────────────────── */
+.recharts-surface { overflow: visible; }
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical   line { stroke: rgba(255,255,255,0.05) !important; }
+.recharts-tooltip-wrapper { outline: none !important; }
+
+/* ── Pulse dot (live indicator) ───────────────────────────────────────────── */
+.pulse-dot {
+  width       : 8px;
+  height      : 8px;
+  border-radius: 50%;
+  background  : var(--green);
+  position    : relative;
+  flex-shrink : 0;
+}
+.pulse-dot::after {
+  content   : '';
+  position  : absolute;
+  inset     : -4px;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.3);
+  animation : ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+.data-table { @apply w-full text-sm; }
+.data-table thead tr { border-bottom: 1px solid var(--border); }
+.data-table thead th { @apply py-3 px-4 text-left font-semibold; color: var(--text-muted); }
+.data-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition   : background 0.15s;
+}
+.data-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+.data-table tbody td { @apply py-3 px-4; }
+
+/* ── Loading Skeleton ─────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%,
+              rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}

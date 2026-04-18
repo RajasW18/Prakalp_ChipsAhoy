@@ -1,0 +1,168 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+// Patients and doctors share one table, differentiated by `role`
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  name         String?
+  avatarUrl    String?
+  role         Role      @default(PATIENT)
+  oauthSub     String?   @unique   // Google OAuth subject ID
+  totpSecret   String?             // AES-256 encrypted TOTP secret
+  totpEnabled  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  devices         Device[]
+  patientSessions Session[]      @relation("PatientSessions")
+  consultationsAsDoctor Consultation[] @relation("DoctorConsultations")
+  consultationsAsPatient Consultation[] @relation("PatientConsultations")
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+// ─── IoT Devices ──────────────────────────────────────────────────────────────
+// Each ESP32 DevKit V1 is identified by its Wi-Fi MAC address
+model Device {
+  id           String    @id @default(uuid()) @db.Uuid
+  macAddress   String    @unique   // "AA:BB:CC:DD:EE:FF"
+  label        String?             // Human-readable e.g. "Clinic Unit 1"
+  lastSeenAt   DateTime?
+  rssiDbm      Int?                // Last known Wi-Fi signal strength
+  registeredAt DateTime  @default(now())
+
+  patient      User?     @relation(fields: [patientId], references: [id])
+  patientId    String?   @db.Uuid
+
+  sessions     Session[]
+  ppgReadings  PpgReading[]
+
+  @@map("devices")
+}
+
+// ─── Monitoring Sessions ───────────────────────────────────────────────────────
+// A session = one contiguous recording period (patient sits down, starts reading)
+model Session {
+  id         String        @id @default(uuid()) @db.Uuid
+  startedAt  DateTime      @default(now())
+  endedAt    DateTime?
+  status     SessionStatus @default(ACTIVE)
+  notes      String?
+
+  device     Device        @relation(fields: [deviceId], references: [id])
+  deviceId   String        @db.Uuid
+
+  patient    User          @relation("PatientSessions", fields: [patientId], references: [id])
+  patientId  String        @db.Uuid
+
+  ppgReadings    PpgReading[]
+  predictions    MlPrediction[]
+  consultations  Consultation[]
+
+  @@map("sessions")
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  ERROR
+}
+
+// ─── PPG Readings ─────────────────────────────────────────────────────────────
+// High-frequency time-series table — index on (sessionId, ts) for fast queries.
+// At 9600 baud ≈ 300 valid pkts/sec → ~1M rows/hour. Archive policy recommended.
+model PpgReading {
+  id        BigInt   @id @default(autoincrement())
+  ts        DateTime @db.Timestamptz(3)   // NTP-synced timestamp from ESP32
+  seq       BigInt                         // Sequence number (detect gaps)
+  raw12bit  Int      @db.SmallInt         // 0–4095 raw ADC count
+  voltageV  Decimal  @db.Decimal(6, 4)   // 0.0000–1.0000 V
+
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String   @db.Uuid
+
+  device    Device   @relation(fields: [deviceId], references: [id])
+  deviceId  String   @db.Uuid
+
+  @@index([sessionId, ts])
+  @@index([deviceId, ts])
+  @@map("ppg_readings")
+}
+
+// ─── ML Predictions ───────────────────────────────────────────────────────────
+// One prediction record per FPGA inference result transmitted via 0xFE packet
+model MlPrediction {
+  id             String   @id @default(uuid()) @db.Uuid
+  ts             DateTime @db.Timestamptz(3)
+  classId        Int      @db.SmallInt     // 0–4
+  classLabel     String                    // "Normal", "Arrhythmia", etc.
+  confidence     Decimal  @db.Decimal(5, 3) // 0.000–1.000
+  confidenceRaw  Int      @db.SmallInt     // 0–255 raw FPGA output
+
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String   @db.Uuid
+
+  @@index([sessionId, ts])
+  @@map("ml_predictions")
+}
+
+// ─── Consultations ────────────────────────────────────────────────────────────
+model Consultation {
+  id             String          @id @default(uuid()) @db.Uuid
+  createdAt      DateTime        @default(now())
+  findings       String?
+  recommendation String?
+  severity       ConsultSeverity @default(NORMAL)
+
+  session    Session  @relation(fields: [sessionId], references: [id])
+  sessionId  String   @db.Uuid
+
+  doctor     User     @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  doctorId   String   @db.Uuid
+
+  patient    User     @relation("PatientConsultations", fields: [patientId], references: [id])
+  patientId  String   @db.Uuid
+
+  @@map("consultations")
+}
+
+enum ConsultSeverity {
+  NORMAL
+  MONITOR
+  URGENT
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  action    String   // e.g. "VIEW_SESSION", "ADD_CONSULTATION"
+  resource  String   // e.g. "session/uuid"
+  ipAddress String?
+  ts        DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.Uuid
+
+  @@index([userId, ts])
+  @@map("audit_log")
+}
