@@ -63,8 +63,8 @@ router.post('/email/verify-otp', async (req, res, next) => {
     
     if (user) {
       // Direct login
-      setCookies(res, user);
-      return res.json({ success: true, registered: true });
+      const accessToken = setCookies(res, user);
+      return res.json({ success: true, registered: true, accessToken });
     } else {
       // Signal UI to show registration form, issue short-lived JWT token
       const regToken = jwt.sign({ email, verified: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
@@ -99,8 +99,8 @@ router.post('/email/register', async (req, res, next) => {
       }
     });
 
-    setCookies(res, user);
-    res.json({ success: true, registered: true });
+    const accessToken = setCookies(res, user);
+    res.json({ success: true, registered: true, accessToken });
   } catch (err) { next(err); }
 });
 
@@ -126,7 +126,7 @@ router.get('/google/callback',
       return res.redirect(`${process.env.FRONTEND_URL}/auth/2fa`);
     }
 
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
   }
 );
 

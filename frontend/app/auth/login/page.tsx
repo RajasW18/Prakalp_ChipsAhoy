@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, CheckCircle2, User, Phone, ArrowLeft, Loader2 } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi, storeToken } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,6 +38,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.verifyOtp(email, otp);
       if (res.data.registered) {
+        if (res.data.accessToken) storeToken(res.data.accessToken);
         window.location.href = '/dashboard';
       } else {
         setRegToken(res.data.regToken);
@@ -55,7 +56,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await authApi.registerEmail(regToken, name, phone);
+      const res = await authApi.registerEmail(regToken, name, phone);
+      if (res.data.accessToken) storeToken(res.data.accessToken);
       window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to complete registration.');

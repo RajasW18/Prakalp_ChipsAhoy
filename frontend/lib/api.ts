@@ -8,6 +8,27 @@ const api = axios.create({
   timeout        : 10_000,
 });
 
+// ── Persist token to localStorage for cross-domain auth ──────────────────────
+export function storeToken(token: string) {
+  if (typeof window !== 'undefined') localStorage.setItem('ppg_token', token);
+}
+export function clearToken() {
+  if (typeof window !== 'undefined') localStorage.removeItem('ppg_token');
+}
+export function getStoredToken(): string | null {
+  if (typeof window !== 'undefined') return localStorage.getItem('ppg_token');
+  return null;
+}
+
+// ── Attach Authorization header on every request ─────────────────────────────
+api.interceptors.request.use((config) => {
+  const token = getStoredToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // ── Auto-refresh on 401 ──────────────────────────────────────────────────────
 api.interceptors.response.use(
   (res) => res,
@@ -21,6 +42,7 @@ api.interceptors.response.use(
         await api.post('/auth/refresh');
         return api(original);
       } catch {
+        clearToken();
         window.location.href = '/';  // Force re-login
       }
     }
