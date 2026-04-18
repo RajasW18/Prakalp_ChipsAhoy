@@ -35,6 +35,11 @@ export const authApi = {
   setup2fa: () => api.post('/auth/2fa/setup'),
   verify2fa: (token: string) => api.post('/auth/2fa/verify', { token }),
   loginUrl: () => `${API_URL}/auth/google`,
+  
+  requestOtp: (email: string) => api.post('/auth/email/request-otp', { email }),
+  verifyOtp : (email: string, code: string) => api.post('/auth/email/verify-otp', { email, code }),
+  registerEmail: (regToken: string, name: string, phoneNumber: string) => 
+                   api.post('/auth/email/register', { regToken, name, phoneNumber }),
 };
 
 // ── Patients ──────────────────────────────────────────────────────────────────

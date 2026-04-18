@@ -18,6 +18,7 @@ model User {
   email        String    @unique
   name         String?
   avatarUrl    String?
+  phoneNumber  String?
   role         Role      @default(PATIENT)
   oauthSub     String?   @unique   // Google OAuth subject ID
   totpSecret   String?             // AES-256 encrypted TOTP secret
@@ -165,4 +166,16 @@ model AuditLog {
 
   @@index([userId, ts])
   @@map("audit_log")
+}
+
+// ─── OTP Codes ────────────────────────────────────────────────────────────────
+model OtpCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  codeHash  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("otp_codes")
 }

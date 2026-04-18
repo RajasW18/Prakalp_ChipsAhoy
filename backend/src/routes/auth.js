@@ -6,6 +6,9 @@ const jwt      = require('jsonwebtoken');
 const { setCookies, setup2FA, verify2FA } = require('../auth');
 const { authenticate, requireDoctor }     = require('../middleware/authenticate');
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const { sendOtpEmail } = require('../mailer');
+
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -17,6 +20,90 @@ router.get('/google',
     session: false,
   })
 );
+
+// ── Passwordless OTP Login ───────────────────────────────────────────────────
+
+router.post('/email/request-otp', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    // Using raw SQL upsert equivalent, but for prisma just use standard upsert if there's a unique constraint on email
+    await prisma.otpCode.upsert({
+      where: { email },
+      update: { codeHash: otpHash, expiresAt },
+      create: { email, codeHash: otpHash, expiresAt }
+    });
+
+    await sendOtpEmail(email, otp);
+    res.json({ success: true, message: 'OTP sent to email.' });
+  } catch (err) { next(err); }
+});
+
+router.post('/email/verify-otp', async (req, res, next) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and OTP are required' });
+
+    const record = await prisma.otpCode.findUnique({ where: { email } });
+    if (!record || record.expiresAt < new Date()) {
+      return res.status(401).json({ error: 'OTP expired or invalid' });
+    }
+
+    const valid = await bcrypt.compare(code, record.codeHash);
+    if (!valid) return res.status(401).json({ error: 'Invalid OTP' });
+
+    await prisma.otpCode.delete({ where: { email } });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (user) {
+      // Direct login
+      setCookies(res, user);
+      return res.json({ success: true, registered: true });
+    } else {
+      // Signal UI to show registration form, issue short-lived JWT token
+      const regToken = jwt.sign({ email, verified: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
+      return res.json({ success: true, registered: false, regToken });
+    }
+  } catch (err) { next(err); }
+});
+
+router.post('/email/register', async (req, res, next) => {
+  try {
+    const { regToken, name, phoneNumber } = req.body;
+    if (!regToken || !name) return res.status(400).json({ error: 'Registration Token and Name are required' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(regToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Registration token expired or invalid' });
+    }
+
+    const { email } = decoded;
+
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (user) return res.status(400).json({ error: 'User already exists' });
+
+    user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        phoneNumber,
+        role: 'PATIENT' // default role
+      }
+    });
+
+    setCookies(res, user);
+    res.json({ success: true, registered: true });
+  } catch (err) { next(err); }
+});
+
 
 // ── Step 2: Google callback ───────────────────────────────────────────────────
 router.get('/google/callback',
