@@ -23,6 +23,10 @@ model User {
   oauthSub     String?   @unique   // Google OAuth subject ID
   totpSecret   String?             // AES-256 encrypted TOTP secret
   totpEnabled  Boolean   @default(false)
+  age          Int?
+  gender       String?
+  weight       Float?
+  height       Float?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

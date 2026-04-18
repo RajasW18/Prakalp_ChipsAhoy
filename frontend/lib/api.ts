@@ -62,6 +62,7 @@ export const authApi = {
   verifyOtp : (email: string, code: string) => api.post('/auth/email/verify-otp', { email, code }),
   registerEmail: (regToken: string, name: string, phoneNumber: string) => 
                    api.post('/auth/email/register', { regToken, name, phoneNumber }),
+  updateProfile: (data: any) => api.patch('/auth/profile', data),
 };
 
 // ── Patients ──────────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ export const sessionsApi = {
   data   : (id: string, limit = 500, cursor?: string) =>
              api.get(`/api/sessions/${id}/data`, { params: { limit, cursor } }),
   end    : (id: string) => api.patch(`/api/sessions/${id}/end`),
+  exportUrl: (id: string) => `${API_URL}/api/sessions/${id}/export`,
 };
 
 // ── Devices ───────────────────────────────────────────────────────────────────

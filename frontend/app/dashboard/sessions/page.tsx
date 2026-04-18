@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { sessionsApi } from '@/lib/api';
 import { format } from 'date-fns';
-import { Activity, Calendar, Clock, ChevronRight, CheckCircle2, AlertTriangle, User } from 'lucide-react';
+import { Activity, Calendar, Clock, ChevronRight, CheckCircle2, AlertTriangle, User, Download } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SessionsPage() {
@@ -99,7 +99,15 @@ export default function SessionsPage() {
                           {s._count.ppgReadings.toLocaleString()}
                         </span>
                       </td>
-                      <td className="pr-6 py-4 text-right">
+                      <td className="pr-6 py-4 text-right flex items-center justify-end gap-2">
+                        <a 
+                          href={sessionsApi.exportUrl(s.id)} 
+                          download 
+                          className="p-1.5 rounded-lg border border-white/5 hover:border-emerald-500/30 hover:text-emerald-400 text-slate-500 transition-all"
+                          title="Download CSV"
+                        >
+                          <Download size={16} />
+                        </a>
                         <Link href={`/dashboard/sessions/${s.id}`} className="btn-ghost px-3 py-1.5 inline-flex items-center gap-1 group-hover:border-cyan-500/30 group-hover:text-cyan-400 transition-colors">
                           View
                           <ChevronRight size={14} />

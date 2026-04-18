@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import {
   Activity, LayoutDashboard, Users, ClipboardList,
-  MonitorDot, Cpu, LogOut, ChevronRight,
+  MonitorDot, Cpu, LogOut, ChevronRight, UserCircle
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { authApi } from '@/lib/api';
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/live',     icon: Activity,        label: 'Live Monitor' },
   { href: '/dashboard/sessions', icon: MonitorDot,      label: 'Sessions'    },
   { href: '/dashboard/patients', icon: Users,           label: 'Patients'    },
+  { href: '/dashboard/profile',  icon: UserCircle,      label: 'My Profile'  },
 ];
 
 const DOCTOR_ITEMS = [

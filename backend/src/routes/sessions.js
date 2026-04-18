@@ -76,4 +76,46 @@ router.patch('/:id/end', authenticate, requireDoctor, async (req, res, next) => 
   } catch (err) { next(err); }
 });
 
+// GET /api/sessions/:id/export — download all data for a session as CSV
+router.get('/:id/export', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const session = await prisma.session.findUnique({
+      where: { id },
+      include: { patient: { select: { id: true, name: true } } }
+    });
+
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    // Permissions: Only owner or doctor
+    const isDoctor = ['DOCTOR', 'ADMIN'].includes(req.user.role);
+    if (!isDoctor && session.patientId !== req.user.sub) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Fetch all readings (might be large, but for now we fetch all)
+    const readings = await prisma.ppgReading.findMany({
+      where: { sessionId: id },
+      orderBy: { ts: 'asc' },
+      select: { ts: true, seq: true, raw12bit: true, voltageV: true }
+    });
+
+    const filename = `ppg_session_${id.slice(0, 8)}_${new Date().toISOString().split('T')[0]}.csv`;
+    
+    // Set CSV headers
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Write CSV header
+    res.write('Timestamp,Sequence,RawValue,Voltage\n');
+
+    // Write data rows
+    readings.forEach(r => {
+      res.write(`${r.ts.toISOString()},${r.seq},${r.raw12bit},${r.voltageV}\n`);
+    });
+
+    res.end();
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

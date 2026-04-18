@@ -1,6 +1,7 @@
 'use strict';
 
 const express  = require('express');
+const { body, validationResult } = require('express-validator');
 const passport = require('passport');
 const jwt      = require('jsonwebtoken');
 const { setCookies, setup2FA, verify2FA } = require('../auth');
@@ -203,6 +204,47 @@ router.get('/me', authenticate, async (req, res, next) => {
     res.json({ ...user, accessToken });
   } catch (err) { next(err); }
 });
+
+// ── Update Profile ───────────────────────────────────────────────────────────
+// PATCH /auth/profile
+router.patch('/profile',
+  authenticate,
+  [
+    body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+    body('phoneNumber').optional().trim(),
+    body('age').optional().isInt({ min: 0, max: 150 }).withMessage('Invalid age'),
+    body('gender').optional().trim(),
+    body('weight').optional().isFloat({ min: 0 }).withMessage('Invalid weight'),
+    body('height').optional().isFloat({ min: 0 }).withMessage('Invalid height'),
+  ],
+  async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    try {
+      const { name, phoneNumber, age, gender, weight, height } = req.body;
+      
+      const updated = await prisma.user.update({
+        where: { id: req.user.sub },
+        data: {
+          name,
+          phoneNumber,
+          age: age !== undefined ? parseInt(age) : undefined,
+          gender,
+          weight: weight !== undefined ? parseFloat(weight) : undefined,
+          height: height !== undefined ? parseFloat(height) : undefined,
+        },
+        select: {
+          id: true, email: true, name: true, role: true, avatarUrl: true,
+          phoneNumber: true, age: true, gender: true, weight: true, height: true,
+          totpEnabled: true, createdAt: true
+        }
+      });
+
+      res.json({ success: true, user: updated });
+    } catch (err) { next(err); }
+  }
+);
 
 // ── Logout ────────────────────────────────────────────────────────────────────
 router.post('/logout', (_req, res) => {

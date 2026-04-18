@@ -16,6 +16,29 @@ export default function DashboardOverview() {
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           {isDoctor ? 'Doctor Portal Overview' : 'Patient Health Summary'}
         </p>
+
+        {!isDoctor && (user?.age || user?.weight || user?.height) && (
+          <div className="flex gap-4 mt-4">
+            {user.age && (
+              <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs">
+                <span className="text-slate-500 uppercase tracking-tighter mr-2">Age</span>
+                <span className="text-white font-medium">{user.age} Yrs</span>
+              </div>
+            )}
+            {user.weight && (
+              <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs">
+                <span className="text-slate-500 uppercase tracking-tighter mr-2">Weight</span>
+                <span className="text-white font-medium">{user.weight} kg</span>
+              </div>
+            )}
+            {user.height && (
+              <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs">
+                <span className="text-slate-500 uppercase tracking-tighter mr-2">Height</span>
+                <span className="text-white font-medium">{user.height} cm</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
