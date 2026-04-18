@@ -12,7 +12,12 @@ router.get('/', authenticate, async (req, res, next) => {
   try {
     const isDoctor = ['DOCTOR', 'ADMIN'].includes(req.user.role);
     const devices  = await prisma.device.findMany({
-      where  : isDoctor ? {} : { patientId: req.user.sub },
+      where  : isDoctor ? {} : {
+        OR: [
+          { patientId: req.user.sub },
+          { patientId: null } // Show unassigned devices for testing
+        ]
+      },
       orderBy: { registeredAt: 'desc' },
       include: { patient: { select: { name: true, email: true } } },
     });
